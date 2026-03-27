@@ -1,0 +1,11 @@
+infrastructureDefinition:
+  name: pismo-jpbarto-local-k8s
+  identifier: pismojpbartolocalk8s
+  environmentRef: pismojpbartolocal
+  deploymentType: Kubernetes
+  type: KubernetesDirect
+  spec:
+    connectorRef: account.pismojpbartolocalk8s
+    namespace: jpbarto-proj-ns
+    releaseName: release-<+INFRA_KEY_SHORT_ID>
+  allowSimultaneousDeployments: false
