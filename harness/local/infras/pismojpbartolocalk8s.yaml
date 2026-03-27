@@ -1,5 +1,5 @@
 infrastructureDefinition:
-  name: pismo-jpbarto-local-k8s
+  name: pismo-jpbarto-local-k8s-proj-ns
   identifier: pismojpbartolocalk8s
   environmentRef: pismojpbartolocal
   deploymentType: Kubernetes
