@@ -3,7 +3,7 @@
         {
             "name": "harness-eval",
             "repository": "https://github.com/jpbarto/harness-eval.git",
-            "version": "rel05"
+            "version": "rel06"
         }
     ]
 }
