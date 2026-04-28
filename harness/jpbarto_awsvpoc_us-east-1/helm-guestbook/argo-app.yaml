@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: helm-guestbook
+  namespace: psm-jpbarto
+spec:
+  project: psm-jpbarto_helm-guestbook
+
+  source:
+    repoURL: oci://ttl.sh/jpbarto/charts
+    chart: helm-guestbook
+    targetRevision: "1.0.7"
+
+    helm:
+      releaseName: helm-guestbook
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: psm-jpbarto
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
