@@ -4,6 +4,10 @@
 
 set -euo pipefail
 
+WORKDIR=$(mktemp -d)
+mkdir -p $WORKDIR
+cd $WORKDIR
+
 microdnf install -y git python3
 microdnf clean all
 
