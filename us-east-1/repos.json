@@ -6,8 +6,8 @@
     "autoPromote": false,
     "coderio": {
         "org": "psm-jpbarto",
-        "project": "guestbook",
-        "pipeline": "guestbook-deploy"
+        "project": "psm-jpbarto_guestbook",
+        "pipeline": "gitops-pr-pipeline"
     }
   }
 ]
