@@ -70,14 +70,10 @@ echo "Triggering pipeline '${CODERIO_PIPELINE}' in org '${CODERIO_ORG}' / projec
 
 TRIGGER_RESPONSE=$(curl -s -w "\n%{http_code}" \
   -X POST \
-  "${HARNESS_BASE_URL}/pipeline/api/pipeline/execute/${CODERIO_PIPELINE}" \
+  "${HARNESS_BASE_URL}/pipeline/api/pipeline/execute/${CODERIO_PIPELINE}?accountIdentifier=${HARNESS_ACCOUNT_ID}&orgIdentifier=${CODERIO_ORG}&projectIdentifier=${CODERIO_PROJECT}" \
   -H "x-api-key: ${HARNESS_API_KEY}" \
-  -H "Content-Type: application/json" \
-  --data-raw '{}' \
-  --get \
-  --data-urlencode "accountIdentifier=${HARNESS_ACCOUNT_ID}" \
-  --data-urlencode "orgIdentifier=${CODERIO_ORG}" \
-  --data-urlencode "projectIdentifier=${CODERIO_PROJECT}")
+  -H "Content-Type: application/yaml" \
+  --data-binary '')
 
 HTTP_CODE=$(echo "$TRIGGER_RESPONSE" | tail -n1)
 TRIGGER_BODY=$(echo "$TRIGGER_RESPONSE" | head -n-1)
