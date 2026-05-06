@@ -1,7 +1,7 @@
 [
   {
     "repo_url": "https://github.com/jpbarto/harness-eval",
-    "release": "rel07",
+    "release": "rel06",
     "config": "jpbarto/harness-eval",
     "autoPromote": false,
     "coderio": {
