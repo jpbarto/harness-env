@@ -1,0 +1,8 @@
+[
+  {
+    "repo_url": "https://github.com/jpbarto/harness-eval",
+    "release": "v0.1.0",
+    "config": "jpbarto/harness-eval",
+    "autoPromote": false
+  }
+]
