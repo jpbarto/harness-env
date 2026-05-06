@@ -1,8 +1,13 @@
 [
   {
     "repo_url": "https://github.com/jpbarto/harness-eval",
-    "release": "v0.1.0",
+    "release": "rel08",
     "config": "jpbarto/harness-eval",
-    "autoPromote": false
+    "autoPromote": false,
+    "coderio": {
+        "org": "psm-jpbarto",
+        "project": "guestbook",
+        "pipeline": "guestbook-deploy"
+    }
   }
 ]
