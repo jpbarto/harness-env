@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Detects changes to the 'release' field in repos.json files by comparing the
-current working tree against the last commit (HEAD).
-Outputs the JSON objects from the working tree where 'release' has changed.
+Detects changes to the 'release' field in repos.json files by comparing
+HEAD against HEAD~1 (the most recent commit against the previous commit).
+Outputs the JSON objects from HEAD where 'release' has changed.
 """
 
 import json
@@ -24,8 +24,8 @@ def get_repo_root():
 
 
 def get_changed_repos_files():
-    """Return repos.json paths that differ between the working tree and HEAD."""
-    output = run_git(["diff", "--name-only", "HEAD"])
+    """Return repos.json paths that differ between HEAD~1 and HEAD."""
+    output = run_git(["diff", "--name-only", "HEAD~1", "HEAD"])
     if not output:
         return []
     return [f.strip() for f in output.splitlines() if f.strip().endswith("repos.json")]
@@ -79,13 +79,13 @@ def main():
 
     all_changed = []
     for path in changed_files:
-        # new = current working tree; old = last commit
-        new_content = read_working_tree_file(path)
+        # new = HEAD (latest commit); old = HEAD~1 (previous commit)
+        new_content = get_file_at_ref(path, "HEAD")
         if new_content is None:
-            # File was deleted in the working tree
+            # File was deleted in HEAD
             continue
 
-        old_content = get_file_at_ref(path, "HEAD")
+        old_content = get_file_at_ref(path, "HEAD~1")
 
         try:
             changed = find_release_changes(old_content, new_content)
