@@ -28,14 +28,18 @@ pipeline:
                           # Clone harness-env at the commit that triggered this pipeline.
                           # depth=2 ensures HEAD~1 is available for the release-change diff
                           # performed by detect_release_changes.py.
-                          mkdir -p /harness/workspace
+                          WORKSPACE=$(mktemp -d)
                           git clone --depth 2 \
                             https://x-access-token:<+secrets.getValue("account.jpbarto-github-token")>@github.com/jpbarto/harness-env.git \
-                            /harness/workspace
-                          cd /harness/workspace
+                            "$WORKSPACE"
+                          cd "$WORKSPACE"
                           git checkout <+trigger.commitSha>
+                          export WORKSPACE
                     environmentVariables: []
-                    outputVariables: []
+                    outputVariables:
+                      - name: WORKSPACE
+                        type: String
+                        value: WORKSPACE
                   timeout: 10m
               - step:
                   type: ShellScript
@@ -48,11 +52,11 @@ pipeline:
                       type: Inline
                       spec:
                         script: |-
-                          cd /harness/workspace
+                          cd <+execution.steps.clone_repository.output.outputVariables.WORKSPACE>
                           pip3 install --quiet pyyaml
-                          python3 scripts/detect_release_changes.py > /harness/changed_repos.json
+                          python3 scripts/detect_release_changes.py > /tmp/changed_repos.json
                           echo "=== Changed repository releases ==="
-                          cat /harness/changed_repos.json
+                          cat /tmp/changed_repos.json
                     environmentVariables: []
                     outputVariables: []
                   timeout: 10m
@@ -67,7 +71,7 @@ pipeline:
                       type: Inline
                       spec:
                         script: |-
-                          cd /harness/workspace
+                          cd <+execution.steps.clone_repository.output.outputVariables.WORKSPACE>
                           pip3 install --quiet pyyaml
                           python3 scripts/echo_deployment_dispatches.py
                     environmentVariables: []
