@@ -1,0 +1,3 @@
+name: jpbarto-us-east-1
+environment_ref: jpbartoawsvpocenv
+infrastructure_ref: jpbartouseast1k8sinfra

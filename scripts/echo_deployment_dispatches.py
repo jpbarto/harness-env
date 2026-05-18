@@ -85,6 +85,13 @@ def build_input_yaml(pipeline_id, repo_url, release_tag, environment_ref,
     ]) + "\n"
 
 
+def load_environment_config(env_name):
+    """Load environment.yaml for the given environment directory."""
+    path = f"environments/{env_name}/environment.yaml"
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
 def main():
     account_id = get_env("HARNESS_ACCOUNT_ID")
     api_key    = get_env("HARNESS_API_KEY")
@@ -102,11 +109,14 @@ def main():
     overall_success = True
 
     for entry in changed:
-        repo_url           = entry.get("repo_url", "")
-        env_name           = entry.get("environment", "unknown")
-        release            = entry.get("release", "unknown")
-        environment_ref    = entry.get("environment_ref", "UNKNOWN")
-        infrastructure_ref = entry.get("infrastructure_ref", "UNKNOWN")
+        repo_url = entry.get("repo_url", "")
+        env_name = entry.get("environment", "unknown")
+        release  = entry.get("release", "unknown")
+
+        env_config         = load_environment_config(env_name)
+        environment_ref    = env_config.get("environment_ref", "UNKNOWN")
+        infrastructure_ref = env_config.get("infrastructure_ref", "UNKNOWN")
+        environment_name   = env_config.get("name", env_name)
 
         meta                 = bindings.get(repo_url, {}).get("meta", {})
         org                  = meta.get("organization", "UNKNOWN")
@@ -120,7 +130,7 @@ def main():
         print(f"  Project:            {project}")
         print(f"  RepoUrl:            {repo_url}")
         print(f"  ReleaseTag:         {release}")
-        print(f"  EnvironmentName:    {env_name}")
+        print(f"  EnvironmentName:    {environment_name}")
         print(f"  EnvironmentRef:     {environment_ref}")
         print(f"  InfrastructureRef:  {infrastructure_ref}")
         print(f"  GitHubConnectorRef: {github_connector_ref}")
@@ -131,7 +141,7 @@ def main():
             release_tag=release,
             environment_ref=environment_ref,
             infrastructure_ref=infrastructure_ref,
-            environment_name=env_name,
+            environment_name=environment_name,
         )
 
         try:
