@@ -51,9 +51,9 @@ pipeline:
                     command: |-
                       apt-get update -qq && apt-get install -y -qq git
                       pip install --quiet pyyaml
-                      python3 scripts/detect_release_changes.py > /tmp/changed_repos.json
+                      python3 scripts/detect_release_changes.py > /harness/changed_repos.json
                       echo "=== Changed repository releases ==="
-                      cat /tmp/changed_repos.json
+                      cat /harness/changed_repos.json
               - step:
                   type: Run
                   name: Echo Deployment Dispatches
@@ -67,7 +67,7 @@ pipeline:
                       python3 - << 'PYEOF'
                       import json, sys, yaml
 
-                      with open("/tmp/changed_repos.json") as f:
+                      with open("/harness/changed_repos.json") as f:
                           changed = json.load(f)
 
                       if not changed:
