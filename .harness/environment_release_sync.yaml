@@ -1,8 +1,8 @@
 pipeline:
   name: Environment Release Sync
   identifier: environment_release_sync
-  orgIdentifier: psmjpbarto
-  projectIdentifier: psmjpbarto_guestbook
+  orgIdentifier: jpbartocoderio
+  projectIdentifier: environments
   tags: {}
   description: >-
     Triggered by pushes to main. Detects which environment repositories had a
