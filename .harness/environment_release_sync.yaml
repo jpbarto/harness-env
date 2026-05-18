@@ -4,18 +4,12 @@ pipeline:
   orgIdentifier: jpbartocoderio
   projectIdentifier: environments
   tags: {}
-  description: >-
-    Triggered by pushes to main. Detects which environment repositories had a
-    release version change and echoes the deployment pipeline that would be
-    executed for each affected repository.
+  description: Triggered by pushes to main. Detects which environment repositories had a release version change and echoes the deployment pipeline that would be executed for each affected repository.
   stages:
     - stage:
         name: Detect and Dispatch
         identifier: detect_and_dispatch
-        description: >-
-          Detect repository release changes across all environments and echo
-          the deployment pipeline details that would be triggered for each
-          changed repository.
+        description: Detect repository release changes across all environments and echo the deployment pipeline details that would be triggered for each changed repository.
         type: Custom
         spec:
           execution:
@@ -79,3 +73,5 @@ pipeline:
                     environmentVariables: []
                     outputVariables: []
                   timeout: 10m
+  delegateSelectors:
+    - jpbarto-aws-vpoc-delegate-us-east-1
