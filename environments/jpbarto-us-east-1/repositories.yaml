@@ -2,3 +2,5 @@
   repo_url: https://github.com/jpbarto/harness-eval
   release: rel08
   autoPromote: false
+  environment_ref: jpbarto-us-east-1
+  infrastructure_ref: jpbarto-us-east-1-k8s
