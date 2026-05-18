@@ -28,11 +28,19 @@ def get_env(name):
 
 
 def _api(method, url, api_key, body=None):
-    data = json.dumps(body).encode() if body is not None else None
+    if body is None:
+        data, content_type = None, "application/json"
+    elif isinstance(body, str):
+        # YAML body — sent as raw text (e.g. pipeline execute endpoint)
+        data, content_type = body.encode(), "application/yaml"
+    else:
+        # dict body — sent as JSON
+        data, content_type = json.dumps(body).encode(), "application/json"
+
     req = urllib.request.Request(
         url,
         data=data,
-        headers={"x-api-key": api_key, "Content-Type": "application/json"},
+        headers={"x-api-key": api_key, "Content-Type": content_type},
         method=method,
     )
     try:
@@ -47,7 +55,7 @@ def execute_pipeline(account_id, api_key, org, project, pipeline_id, input_yaml)
         f"{HARNESS_BASE_URL}/pipeline/api/pipeline/execute/{pipeline_id}"
         f"?accountIdentifier={account_id}&orgIdentifier={org}&projectIdentifier={project}"
     )
-    return _api("POST", url, api_key, {"inputYaml": input_yaml})["data"]["planExecution"]["uuid"]
+    return _api("POST", url, api_key, input_yaml)["data"]["planExecution"]["uuid"]
 
 
 def get_execution_status(account_id, api_key, org, project, execution_id):
