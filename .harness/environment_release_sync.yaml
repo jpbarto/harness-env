@@ -72,7 +72,7 @@ pipeline:
                       spec:
                         script: |-
                           cd <+execution.steps.clone_repository.output.outputVariables.WORKSPACE>
-                          microdnf install -y python3-pyyaml python3-requests
+                          microdnf install -y python3-pyyaml
                           python3 scripts/echo_deployment_dispatches.py
                     environmentVariables:
                       - name: HARNESS_ACCOUNT_ID

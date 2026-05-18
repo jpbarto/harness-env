@@ -10,8 +10,8 @@ import json
 import os
 import sys
 import time
-
-import requests
+import urllib.error
+import urllib.request
 import yaml
 
 HARNESS_BASE_URL = "https://app.harness.io"
@@ -27,19 +27,27 @@ def get_env(name):
     return val
 
 
+def _api(method, url, api_key, body=None):
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={"x-api-key": api_key, "Content-Type": "application/json"},
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"HTTP {e.code} {e.reason}: {e.read().decode()}") from e
+
+
 def execute_pipeline(account_id, api_key, org, project, pipeline_id, input_yaml):
     url = (
         f"{HARNESS_BASE_URL}/pipeline/api/pipeline/execute/{pipeline_id}"
         f"?accountIdentifier={account_id}&orgIdentifier={org}&projectIdentifier={project}"
     )
-    response = requests.post(
-        url,
-        headers={"x-api-key": api_key, "Content-Type": "application/json"},
-        json={"inputYaml": input_yaml},
-        timeout=30,
-    )
-    response.raise_for_status()
-    return response.json()["data"]["planExecution"]["uuid"]
+    return _api("POST", url, api_key, {"inputYaml": input_yaml})["data"]["planExecution"]["uuid"]
 
 
 def get_execution_status(account_id, api_key, org, project, execution_id):
@@ -47,9 +55,7 @@ def get_execution_status(account_id, api_key, org, project, execution_id):
         f"{HARNESS_BASE_URL}/pipeline/api/pipelines/execution/{execution_id}/summary"
         f"?accountIdentifier={account_id}&orgIdentifier={org}&projectIdentifier={project}"
     )
-    response = requests.get(url, headers={"x-api-key": api_key}, timeout=30)
-    response.raise_for_status()
-    return response.json()["data"]["pipelineExecutionSummary"]["status"]
+    return _api("GET", url, api_key)["data"]["pipelineExecutionSummary"]["status"]
 
 
 def build_input_yaml(pipeline_id, repo_url, release_tag, environment_ref,
