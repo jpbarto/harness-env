@@ -1,7 +1,6 @@
 name: jpbarto-us-east-1
 aws_region: us-east-1
 environment_ref: account.jpbartoawsvpocenv
-environment_id: jpbartoawsvpocenv
 infrastructure_ref: jpbartouseast1k8sinfra
 gitops_agent_id: account.gitops_jpbarto_awsvpoc_us_east_1
 gitops_cluster_id: account.jpbartoawsvpocuseast1
