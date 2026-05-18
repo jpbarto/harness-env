@@ -1,0 +1,9 @@
+- name: jpbarto-guestbook
+  repo_url: https://github.com/jpbarto/harness-eval
+  release: rel07
+  autoPromote: false
+    "coderio": {
+        "org": "psmjpbarto",
+        "project": "psmjpbarto_guestbook",
+        "pipeline": "gitopsprpipeline"
+    }

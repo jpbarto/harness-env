@@ -1,0 +1,5 @@
+"https://github.com/jpbarto/harness-eval":
+  meta:
+    organization: "psmjpbarto"
+    project: "psmjpbarto_guestbook"
+    deploy_pipeline: "gitopsprpipeline"
