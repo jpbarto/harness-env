@@ -66,10 +66,10 @@ def get_execution_status(account_id, api_key, org, project, execution_id):
 
 
 def build_input_yaml(pipeline_id, repo_url, release_tag, environment_ref,
-                     infrastructure_ref, environment_name):
-    """Build the lastYamlToMerge string for the dynamic pipeline variables.
-    GitHubConnectorRef is omitted — it is fixed in the golden_deploy_env_sync_inputs
-    input set stored in Harness."""
+                     infrastructure_ref, environment_name, environment_id,
+                     github_connector_ref, gitops_agent_id, gitops_cluster_id,
+                     aws_region):
+    """Build the lastYamlToMerge string for the dynamic pipeline variables."""
     def var(name, value):
         return f"    - name: {name}\n      type: String\n      value: {value}"
 
@@ -77,11 +77,16 @@ def build_input_yaml(pipeline_id, repo_url, release_tag, environment_ref,
         "pipeline:",
         f"  identifier: {pipeline_id}",
         "  variables:",
-        var("RepoUrl",           repo_url),
-        var("ReleaseTag",        release_tag),
-        var("EnvironmentRef",    environment_ref),
-        var("InfrastructureRef", infrastructure_ref),
-        var("EnvironmentName",   environment_name),
+        var("RepoUrl",             repo_url),
+        var("ReleaseTag",          release_tag),
+        var("EnvironmentRef",      environment_ref),
+        var("InfrastructureRef",   infrastructure_ref),
+        var("EnvironmentName",     environment_name),
+        var("EnvironmentId",       environment_id),
+        var("GitHubConnectorRef",  github_connector_ref),
+        var("GitopsAgentId",       gitops_agent_id),
+        var("GitopsClusterId",     gitops_cluster_id),
+        var("AwsRegion",           aws_region),
     ]) + "\n"
 
 
@@ -115,8 +120,12 @@ def main():
 
         env_config         = load_environment_config(env_name)
         environment_ref    = env_config.get("environment_ref", "UNKNOWN")
+        environment_id     = env_config.get("environment_id", "UNKNOWN")
         infrastructure_ref = env_config.get("infrastructure_ref", "UNKNOWN")
         environment_name   = env_config.get("name", env_name)
+        gitops_agent_id    = env_config.get("gitops_agent_id", "UNKNOWN")
+        gitops_cluster_id  = env_config.get("gitops_cluster_id", "UNKNOWN")
+        aws_region         = env_config.get("aws_region", "UNKNOWN")
 
         meta                 = bindings.get(repo_url, {}).get("meta", {})
         org                  = meta.get("organization", "UNKNOWN")
@@ -132,8 +141,12 @@ def main():
         print(f"  ReleaseTag:         {release}")
         print(f"  EnvironmentName:    {environment_name}")
         print(f"  EnvironmentRef:     {environment_ref}")
+        print(f"  EnvironmentId:      {environment_id}")
         print(f"  InfrastructureRef:  {infrastructure_ref}")
         print(f"  GitHubConnectorRef: {github_connector_ref}")
+        print(f"  GitopsAgentId:      {gitops_agent_id}")
+        print(f"  GitopsClusterId:    {gitops_cluster_id}")
+        print(f"  AwsRegion:          {aws_region}")
 
         last_yaml_to_merge = build_input_yaml(
             pipeline_id=pipeline,
@@ -142,6 +155,11 @@ def main():
             environment_ref=environment_ref,
             infrastructure_ref=infrastructure_ref,
             environment_name=environment_name,
+            environment_id=environment_id,
+            github_connector_ref=github_connector_ref,
+            gitops_agent_id=gitops_agent_id,
+            gitops_cluster_id=gitops_cluster_id,
+            aws_region=aws_region,
         )
 
         try:
