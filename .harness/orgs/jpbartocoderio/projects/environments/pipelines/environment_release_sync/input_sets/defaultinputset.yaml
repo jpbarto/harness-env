@@ -1,0 +1,27 @@
+inputSet:
+  name: default-input-set
+  identifier: defaultinputset
+  orgIdentifier: jpbartocoderio
+  projectIdentifier: environments
+  pipeline:
+    identifier: environment_release_sync
+    properties:
+      ci:
+        codebase:
+          connectorRef: account.jpbartogithubconnector
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>
+          repoName: <+input>
+    triggers:
+      - trigger:
+          identifier: main_branch_push
+          source:
+            type: Webhook
+            spec:
+              type: Github
+              spec:
+                type: Push
+                spec:
+                  connectorRef: <+input>
