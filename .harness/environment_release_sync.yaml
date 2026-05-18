@@ -1,0 +1,127 @@
+pipeline:
+  name: Environment Release Sync
+  identifier: environment_release_sync
+  orgIdentifier: psmjpbarto
+  projectIdentifier: psmjpbarto_guestbook
+  tags: {}
+  description: >-
+    Triggered by pushes to main. Detects which environment repositories had a
+    release version change and echoes the deployment pipeline that would be
+    executed for each affected repository.
+  properties:
+    ci:
+      codebase:
+        # Replace with the identifier of your GitHub connector in Harness
+        connectorRef: <+input>
+        repoName: harness-env
+        build: <+input>
+        # A git depth of at least 2 is required so that HEAD~1 is available
+        # for the release-change diff. The Harness default (depth 50) is fine
+        # for normal push events.
+  stages:
+    - stage:
+        name: Detect and Dispatch
+        identifier: detect_and_dispatch
+        description: >-
+          Detect repository release changes across all environments and echo
+          the deployment pipeline details that would be triggered for each
+          changed repository.
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Detect Release Changes
+                  identifier: detect_release_changes
+                  spec:
+                    # account.harnessImage is the built-in Harness Docker Hub
+                    # proxy connector; replace if your account uses a different
+                    # connector for public images.
+                    connectorRef: account.harnessImage
+                    image: python:3.11-slim
+                    shell: Sh
+                    command: |-
+                      pip install --quiet pyyaml
+                      python3 scripts/detect_release_changes.py > /tmp/changed_repos.json
+                      echo "=== Changed repository releases ==="
+                      cat /tmp/changed_repos.json
+              - step:
+                  type: Run
+                  name: Echo Deployment Dispatches
+                  identifier: echo_deployment_dispatches
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: python:3.11-slim
+                    shell: Sh
+                    command: |-
+                      pip install --quiet pyyaml
+                      python3 - << 'PYEOF'
+                      import json, sys, yaml
+
+                      with open("/tmp/changed_repos.json") as f:
+                          changed = json.load(f)
+
+                      if not changed:
+                          print("No release changes detected. Nothing to dispatch.")
+                          sys.exit(0)
+
+                      with open("_meta/repository_bindings.yaml") as f:
+                          bindings = yaml.safe_load(f)
+
+                      print("=== Deployment dispatches ===")
+                      for entry in changed:
+                          repo_url = entry.get("repo_url", "")
+                          env_name = entry.get("environment", "unknown")
+                          release  = entry.get("release", "unknown")
+
+                          meta     = bindings.get(repo_url, {}).get("meta", {})
+                          org      = meta.get("organization", "UNKNOWN")
+                          project  = meta.get("project", "UNKNOWN")
+                          pipeline = meta.get("deploy_pipeline", "UNKNOWN")
+
+                          print(f"[DRY RUN] Would execute deployment pipeline:")
+                          print(f"  Pipeline:     {pipeline}")
+                          print(f"  Organization: {org}")
+                          print(f"  Project:      {project}")
+                          print(f"  Environment:  {env_name}")
+                          print(f"  Repository:   {repo_url}")
+                          print(f"  Release:      {release}")
+                          print()
+                      PYEOF
+  triggers:
+    - trigger:
+        name: Main Branch Push
+        identifier: main_branch_push
+        enabled: true
+        description: >-
+          Triggers the Environment Release Sync pipeline whenever a commit is
+          pushed to the main branch of the harness-env repository.
+        tags: {}
+        orgIdentifier: psmjpbarto
+        projectIdentifier: psmjpbarto_guestbook
+        pipelineIdentifier: environment_release_sync
+        source:
+          type: Webhook
+          spec:
+            type: Github
+            spec:
+              type: Push
+              spec:
+                # Replace with the identifier of your GitHub connector in Harness
+                connectorRef: <+input>
+                autoAbortPreviousExecutions: false
+                payloadConditions:
+                  - key: targetBranch
+                    operator: Equals
+                    value: main
+                headerConditions: []
+                repoName: harness-env
+                actions: []
