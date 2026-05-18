@@ -60,19 +60,21 @@ def get_execution_status(account_id, api_key, org, project, execution_id):
 
 def build_input_yaml(pipeline_id, repo_url, release_tag, environment_ref,
                      infrastructure_ref, github_connector_ref, environment_name):
-    return yaml.dump({
-        "pipeline": {
-            "identifier": pipeline_id,
-            "variables": [
-                {"name": "RepoUrl",              "type": "String", "value": repo_url},
-                {"name": "ReleaseTag",           "type": "String", "value": release_tag},
-                {"name": "EnvironmentRef",       "type": "String", "value": environment_ref},
-                {"name": "InfrastructureRef",    "type": "String", "value": infrastructure_ref},
-                {"name": "GitHubConnectorRef",   "type": "String", "value": github_connector_ref},
-                {"name": "EnvironmentName",      "type": "String", "value": environment_name},
-            ],
-        }
-    })
+    """Build the inputYaml string in the exact format Harness expects."""
+    def var(name, value):
+        return f"    - name: {name}\n      type: String\n      value: \"{value}\""
+
+    return "\n".join([
+        "pipeline:",
+        f"  identifier: {pipeline_id}",
+        "  variables:",
+        var("RepoUrl",            repo_url),
+        var("ReleaseTag",         release_tag),
+        var("EnvironmentRef",     environment_ref),
+        var("InfrastructureRef",  infrastructure_ref),
+        var("GitHubConnectorRef", github_connector_ref),
+        var("EnvironmentName",    environment_name),
+    ]) + "\n"
 
 
 def main():
