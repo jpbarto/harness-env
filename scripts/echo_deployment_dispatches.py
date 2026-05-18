@@ -59,7 +59,7 @@ def execute_pipeline(account_id, api_key, org, project, pipeline_id, last_yaml_t
 
 def get_execution_status(account_id, api_key, org, project, execution_id):
     url = (
-        f"{HARNESS_BASE_URL}/pipeline/api/pipelines/execution/{execution_id}/summary"
+        f"{HARNESS_BASE_URL}/pipeline/api/pipelines/execution/v2/{execution_id}"
         f"?accountIdentifier={account_id}&orgIdentifier={org}&projectIdentifier={project}"
     )
     return _api("GET", url, api_key)["data"]["pipelineExecutionSummary"]["status"]
