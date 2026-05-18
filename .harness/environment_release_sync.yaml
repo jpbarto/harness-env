@@ -53,7 +53,7 @@ pipeline:
                       spec:
                         script: |-
                           cd <+execution.steps.clone_repository.output.outputVariables.WORKSPACE>
-                          pip3 install --quiet pyyaml
+                          apt-get install -y -qq python3-yaml
                           python3 scripts/detect_release_changes.py > /tmp/changed_repos.json
                           echo "=== Changed repository releases ==="
                           cat /tmp/changed_repos.json
@@ -71,8 +71,9 @@ pipeline:
                       type: Inline
                       spec:
                         script: |-
+                          uname -a
                           cd <+execution.steps.clone_repository.output.outputVariables.WORKSPACE>
-                          pip3 install --quiet pyyaml
+                          apt-get install -y -qq python3-yaml
                           python3 scripts/echo_deployment_dispatches.py
                     environmentVariables: []
                     outputVariables: []
