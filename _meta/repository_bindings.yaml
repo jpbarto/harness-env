@@ -3,4 +3,4 @@
     organization: "psmjpbarto"
     project: "psmjpbarto_guestbook"
     deploy_pipeline: "goldendeploypipeline"
-    github_connector_ref: "account.GitHub"
+    github_connector_ref: "account.jpbartogithubconnector"
