@@ -80,7 +80,7 @@ pipeline:
                         value: <+account.identifier>
                       - name: HARNESS_API_KEY
                         type: Secret
-                        value: account.jpbarto-harness-acct-token
+                        value: account.jpbarto-coderio-svc-token
                     outputVariables: []
                   timeout: 10m
   delegateSelectors:
