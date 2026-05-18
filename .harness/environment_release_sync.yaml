@@ -8,16 +8,6 @@ pipeline:
     Triggered by pushes to main. Detects which environment repositories had a
     release version change and echoes the deployment pipeline that would be
     executed for each affected repository.
-  properties:
-    ci:
-      codebase:
-        # Replace with the identifier of your GitHub connector in Harness
-        connectorRef: <+input>
-        repoName: harness-env
-        build: <+input>
-        # A git depth of at least 2 is required so that HEAD~1 is available
-        # for the release-change diff. The Harness default (depth 50) is fine
-        # for normal push events.
   stages:
     - stage:
         name: Detect and Dispatch
@@ -26,80 +16,66 @@ pipeline:
           Detect repository release changes across all environments and echo
           the deployment pipeline details that would be triggered for each
           changed repository.
-        type: CI
+        type: Custom
         spec:
-          cloneCodebase: true
-          platform:
-            os: Linux
-            arch: Amd64
-          runtime:
-            type: Cloud
-            spec: {}
           execution:
             steps:
               - step:
-                  type: Run
+                  type: ShellScript
+                  name: Clone Repository
+                  identifier: clone_repository
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          # Clone harness-env at the commit that triggered this pipeline.
+                          # depth=2 ensures HEAD~1 is available for the release-change diff
+                          # performed by detect_release_changes.py.
+                          mkdir -p /harness/workspace
+                          git clone --depth 2 \
+                            https://x-access-token:<+secrets.getValue("account.jpbarto-github-token")>@github.com/jpbarto/harness-env.git \
+                            /harness/workspace
+                          cd /harness/workspace
+                          git checkout <+trigger.commitSha>
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+              - step:
+                  type: ShellScript
                   name: Detect Release Changes
                   identifier: detect_release_changes
                   spec:
-                    # account.harnessImage is the built-in Harness Docker Hub
-                    # proxy connector; replace if your account uses a different
-                    # connector for public images.
-                    connectorRef: account.harnessImage
-                    image: python:3.11-slim
-                    shell: Sh
-                    command: |-
-                      apt-get update -qq && apt-get install -y -qq git
-                      pip install --quiet pyyaml
-                      python3 scripts/detect_release_changes.py > /harness/changed_repos.json
-                      echo "=== Changed repository releases ==="
-                      cat /harness/changed_repos.json
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          cd /harness/workspace
+                          pip3 install --quiet pyyaml
+                          python3 scripts/detect_release_changes.py > /harness/changed_repos.json
+                          echo "=== Changed repository releases ==="
+                          cat /harness/changed_repos.json
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
               - step:
-                  type: Run
+                  type: ShellScript
                   name: Echo Deployment Dispatches
                   identifier: echo_deployment_dispatches
                   spec:
-                    connectorRef: account.harnessImage
-                    image: python:3.11-slim
-                    shell: Sh
-                    command: |-
-                      pip install --quiet pyyaml
-                      python3 - << 'PYEOF'
-                      import json, sys, yaml
-
-                      with open("/harness/changed_repos.json") as f:
-                          changed = json.load(f)
-
-                      if not changed:
-                          print("No release changes detected. Nothing to dispatch.")
-                          sys.exit(0)
-
-                      with open("_meta/repository_bindings.yaml") as f:
-                          bindings = yaml.safe_load(f)
-
-                      print("=== Deployment dispatches ===")
-                      for entry in changed:
-                          repo_url          = entry.get("repo_url", "")
-                          env_name          = entry.get("environment", "unknown")
-                          release           = entry.get("release", "unknown")
-                          environment_ref   = entry.get("environment_ref", "UNKNOWN")
-                          infrastructure_ref = entry.get("infrastructure_ref", "UNKNOWN")
-
-                          meta     = bindings.get(repo_url, {}).get("meta", {})
-                          org      = meta.get("organization", "UNKNOWN")
-                          project  = meta.get("project", "UNKNOWN")
-                          pipeline = meta.get("deploy_pipeline", "UNKNOWN")
-                          github_connector_ref = meta.get("github_connector_ref", "UNKNOWN")
-
-                          print(f"[DRY RUN] Would execute deployment pipeline:")
-                          print(f"  Pipeline:           {pipeline}")
-                          print(f"  Organization:       {org}")
-                          print(f"  Project:            {project}")
-                          print(f"  RepoUrl:            {repo_url}")
-                          print(f"  ReleaseTag:         {release}")
-                          print(f"  EnvironmentName:    {env_name}")
-                          print(f"  EnvironmentRef:     {environment_ref}")
-                          print(f"  InfrastructureRef:  {infrastructure_ref}")
-                          print(f"  GitHubConnectorRef: {github_connector_ref}")
-                          print()
-                      PYEOF
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          cd /harness/workspace
+                          pip3 install --quiet pyyaml
+                          python3 scripts/echo_deployment_dispatches.py
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
