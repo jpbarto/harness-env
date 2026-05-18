@@ -49,6 +49,7 @@ pipeline:
                     image: python:3.11-slim
                     shell: Sh
                     command: |-
+                      apt-get update -qq && apt-get install -y -qq git
                       pip install --quiet pyyaml
                       python3 scripts/detect_release_changes.py > /tmp/changed_repos.json
                       echo "=== Changed repository releases ==="
