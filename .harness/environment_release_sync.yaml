@@ -97,32 +97,3 @@ pipeline:
                           print(f"  Release:      {release}")
                           print()
                       PYEOF
-  triggers:
-    - trigger:
-        name: Main Branch Push
-        identifier: main_branch_push
-        enabled: true
-        description: >-
-          Triggers the Environment Release Sync pipeline whenever a commit is
-          pushed to the main branch of the harness-env repository.
-        tags: {}
-        orgIdentifier: psmjpbarto
-        projectIdentifier: psmjpbarto_guestbook
-        pipelineIdentifier: environment_release_sync
-        source:
-          type: Webhook
-          spec:
-            type: Github
-            spec:
-              type: Push
-              spec:
-                # Replace with the identifier of your GitHub connector in Harness
-                connectorRef: <+input>
-                autoAbortPreviousExecutions: false
-                payloadConditions:
-                  - key: targetBranch
-                    operator: Equals
-                    value: main
-                headerConditions: []
-                repoName: harness-env
-                actions: []
