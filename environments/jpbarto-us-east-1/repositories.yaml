@@ -1,4 +1,4 @@
 - name: jpbarto-guestbook
   repo_url: https://github.com/jpbarto/harness-eval
-  release: rel18
+  release: rel19
   autoPromote: false
