@@ -28,19 +28,11 @@ def get_env(name):
 
 
 def _api(method, url, api_key, body=None):
-    if body is None:
-        data, content_type = None, "application/json"
-    elif isinstance(body, str):
-        # YAML body — sent as raw text (e.g. pipeline execute endpoint)
-        data, content_type = body.encode(), "application/yaml"
-    else:
-        # dict body — sent as JSON
-        data, content_type = json.dumps(body).encode(), "application/json"
-
+    data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(
         url,
         data=data,
-        headers={"x-api-key": api_key, "Content-Type": content_type},
+        headers={"x-api-key": api_key, "Content-Type": "application/json"},
         method=method,
     )
     try:
@@ -50,12 +42,19 @@ def _api(method, url, api_key, body=None):
         raise RuntimeError(f"HTTP {e.code} {e.reason}: {e.read().decode()}") from e
 
 
-def execute_pipeline(account_id, api_key, org, project, pipeline_id, input_yaml):
+GOLDEN_DEPLOY_INPUT_SET = "goldendeployinputs"
+
+
+def execute_pipeline(account_id, api_key, org, project, pipeline_id, last_yaml_to_merge):
     url = (
-        f"{HARNESS_BASE_URL}/pipeline/api/pipeline/execute/{pipeline_id}"
+        f"{HARNESS_BASE_URL}/pipeline/api/pipeline/execute/{pipeline_id}/inputSetList"
         f"?accountIdentifier={account_id}&orgIdentifier={org}&projectIdentifier={project}"
     )
-    return _api("POST", url, api_key, input_yaml)["data"]["planExecution"]["uuid"]
+    body = {
+        "inputSetReferences": [GOLDEN_DEPLOY_INPUT_SET],
+        "lastYamlToMerge": last_yaml_to_merge,
+    }
+    return _api("POST", url, api_key, body)["data"]["planExecution"]["uuid"]
 
 
 def get_execution_status(account_id, api_key, org, project, execution_id):
@@ -67,21 +66,22 @@ def get_execution_status(account_id, api_key, org, project, execution_id):
 
 
 def build_input_yaml(pipeline_id, repo_url, release_tag, environment_ref,
-                     infrastructure_ref, github_connector_ref, environment_name):
-    """Build the inputYaml string in the exact format Harness expects."""
+                     infrastructure_ref, environment_name):
+    """Build the lastYamlToMerge string for the dynamic pipeline variables.
+    GitHubConnectorRef is omitted — it is fixed in the golden_deploy_env_sync_inputs
+    input set stored in Harness."""
     def var(name, value):
-        return f"    - name: {name}\n      type: String\n      value: \"{value}\""
+        return f"    - name: {name}\n      type: String\n      value: {value}"
 
     return "\n".join([
         "pipeline:",
         f"  identifier: {pipeline_id}",
         "  variables:",
-        var("RepoUrl",            repo_url),
-        var("ReleaseTag",         release_tag),
-        var("EnvironmentRef",     environment_ref),
-        var("InfrastructureRef",  infrastructure_ref),
-        var("GitHubConnectorRef", github_connector_ref),
-        var("EnvironmentName",    environment_name),
+        var("RepoUrl",           repo_url),
+        var("ReleaseTag",        release_tag),
+        var("EnvironmentRef",    environment_ref),
+        var("InfrastructureRef", infrastructure_ref),
+        var("EnvironmentName",   environment_name),
     ]) + "\n"
 
 
@@ -125,18 +125,17 @@ def main():
         print(f"  InfrastructureRef:  {infrastructure_ref}")
         print(f"  GitHubConnectorRef: {github_connector_ref}")
 
-        input_yaml = build_input_yaml(
+        last_yaml_to_merge = build_input_yaml(
             pipeline_id=pipeline,
             repo_url=repo_url,
             release_tag=release,
             environment_ref=environment_ref,
             infrastructure_ref=infrastructure_ref,
-            github_connector_ref=github_connector_ref,
             environment_name=env_name,
         )
 
         try:
-            execution_id = execute_pipeline(account_id, api_key, org, project, pipeline, input_yaml)
+            execution_id = execute_pipeline(account_id, api_key, org, project, pipeline, last_yaml_to_merge)
         except Exception as e:
             print(f"  ERROR: Failed to invoke pipeline: {e}")
             overall_success = False
